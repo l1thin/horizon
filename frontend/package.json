@@ -1,0 +1,12 @@
+{
+  "_comment": "AntiGravity - package.json - owned by Dev 1 (Frontend)",
+  "dependencies": {
+    "react": "*",
+    "react-dom": "*",
+    "react-dropzone": "*",
+    "@monaco-editor/react": "*",
+    "recharts": "*",
+    "@tanstack/react-query": "*",
+    "socket.io-client": "*"
+  }
+}
