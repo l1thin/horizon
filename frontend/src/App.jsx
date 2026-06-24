@@ -24,7 +24,7 @@ function App() {
 
       <button 
         onClick={cycleState}
-        style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '8px', cursor: 'pointer', backgroundColor: '#333', color: 'white', border: '1px solid #555' }}
+        style={{ padding: '10px 20px', fontSize: '16px', borderRadius: '8px', cursor: 'pointer', backgroundColor: 'black', color: 'white', border: 'none' }}
       >
         Click me or the Orb to cycle state
       </button>
