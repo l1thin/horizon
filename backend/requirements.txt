@@ -1,0 +1,1 @@
+# AntiGravity - requirements.txt - owned by Dev 2 (Backend)
