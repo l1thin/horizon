@@ -1,1 +1,8 @@
 # AntiGravity - requirements.txt - owned by Dev 2 (Backend)
+fastapi
+uvicorn
+python-multipart
+PyMuPDF
+python-docx
+pytest
+httpx
