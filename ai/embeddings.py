@@ -29,11 +29,6 @@ def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     return dot / (mag_a * mag_b)
 
 
-# ---------------------------------------------------------------------------
-# Embedding generation (placeholder — plug in a real model / API)
-# ---------------------------------------------------------------------------
-
-
 async def get_embedding(text: str) -> list[float]:
     """Return an embedding vector for the given text."""
     import os
@@ -50,7 +45,6 @@ async def get_embedding(text: str) -> list[float]:
         )
         return result['embedding']
     else:
-        # Default to OpenAI for embeddings (since Claude doesn't have native embeddings)
         import openai
         client = openai.AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         response = await client.embeddings.create(
@@ -59,10 +53,6 @@ async def get_embedding(text: str) -> list[float]:
         )
         return response.data[0].embedding
 
-
-# ---------------------------------------------------------------------------
-# Skill gap analysis
-# ---------------------------------------------------------------------------
 
 
 async def compute_skill_gap_vectors(
