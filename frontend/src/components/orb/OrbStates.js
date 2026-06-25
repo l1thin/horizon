@@ -1,1 +1,6 @@
-// Horizon - OrbStates.js - owned by Dev 1 (Frontend)
+export const ORB_STATE = {
+  IDLE: 'idle',
+  SPEAKING: 'speaking',
+  LISTENING: 'listening',
+  THINKING: 'thinking'
+};

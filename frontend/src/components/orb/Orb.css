@@ -1,1 +1,100 @@
-/* Horizon - Orb.css - owned by Dev 1 (Frontend) */
+.orb-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem auto;
+  position: relative;
+  width: 280px;
+  height: 280px;
+}
+
+.orb {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: var(--orb-color, #6366f1);
+  box-shadow: 0 0 40px var(--orb-glow, rgba(99, 102, 241, 0.5));
+  position: relative;
+  z-index: 2;
+  transition: all 0.5s ease-in-out;
+  cursor: pointer;
+}
+
+/* IDLE STATE */
+.orb.idle {
+  --orb-color: #4f46e5;
+  --orb-glow: rgba(99, 102, 241, 0.6);
+  animation: pulse-idle 4s ease-in-out infinite;
+}
+
+@keyframes pulse-idle {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 40px var(--orb-glow); }
+  50% { transform: scale(1.05); box-shadow: 0 0 60px var(--orb-glow); }
+}
+
+/* SPEAKING STATE */
+.orb.speaking {
+  --orb-color: #6366f1;
+  --orb-glow: rgba(129, 140, 248, 0.8);
+  box-shadow: 0 0 50px var(--orb-glow);
+}
+
+.orb.speaking::before,
+.orb.speaking::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--orb-glow);
+  z-index: 1;
+  animation: ripple 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.orb.speaking::after {
+  animation-delay: 0.75s;
+}
+
+@keyframes ripple {
+  0% { width: 100%; height: 100%; opacity: 1; }
+  100% { width: 200%; height: 200%; opacity: 0; }
+}
+
+/* LISTENING STATE */
+.orb.listening {
+  --orb-color: #d97706;
+  --orb-glow: rgba(245, 158, 11, 0.8);
+  animation: pulse-listening 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-listening {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 30px var(--orb-glow); }
+  50% { transform: scale(1.1); box-shadow: 0 0 70px var(--orb-glow); }
+}
+
+/* THINKING STATE */
+.orb.thinking {
+  --orb-color: #7c3aed;
+  --orb-glow: rgba(167, 139, 250, 0.8);
+  background: conic-gradient(from 0deg, transparent 0%, var(--orb-color) 50%, transparent 100%);
+  animation: spin-thinking 3s linear infinite;
+}
+
+@keyframes spin-thinking {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.orb-inner-thinking {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  background-color: #0a0a14;
+  border-radius: 50%;
+  z-index: 3;
+}
