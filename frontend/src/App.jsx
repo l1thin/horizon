@@ -26,7 +26,7 @@ export default function App() {
 
   return (
     <>
-      <AntiGravityBackground />
+      <AntiGravityBackground isActive={stage === 'hero'} />
       {stage === 'hero' && <HeroPage onSessionCreated={handleSessionCreated} />}
       {stage === 'loading' && <LoadingPage sessionId={sessionId} onReady={handleReady} />}
       {stage === 'language' && <LanguagePage sessionId={sessionId} onInterviewStart={handleInterviewStart} />}

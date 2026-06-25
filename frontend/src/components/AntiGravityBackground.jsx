@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import './AntiGravityBackground.css';
 
-export default function AntiGravityBackground() {
+export default function AntiGravityBackground({ isActive = true }) {
   const cards = useMemo(() => {
     return Array.from({ length: 15 }).map((_, i) => {
       // Golden angle in radians
@@ -39,7 +39,11 @@ export default function AntiGravityBackground() {
           style={{
             top: `calc(50% + ${card.y}vmin)`,
             left: `calc(50% + ${card.x}vmin)`,
-            transform: `translate(-50%, -50%) scale(${card.scale}) rotate(${card.staticRotation}deg)`,
+            transform: isActive 
+              ? `translate(-50%, -50%) scale(${card.scale}) rotate(${card.staticRotation}deg)`
+              : `translate(calc(-50% + ${card.x * 2}vmin), calc(-50% + ${card.y * 2}vmin)) scale(0) rotate(${card.staticRotation + 180}deg)`,
+            transition: 'transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.2s ease-in-out',
+            opacity: isActive ? 1 : 0,
           }}
         >
           <div 
