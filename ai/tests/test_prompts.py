@@ -101,10 +101,11 @@ def _mock_response(text: str) -> MagicMock:
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_extract_profile_typical(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_extract_profile_typical(mock_anthropic, mock_log):
     """A 10-line resume should produce a profile with name, skills (list), and projects (list)."""
-    mock_client.messages.create.return_value = _mock_response(json.dumps(VALID_PROFILE))
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(json.dumps(VALID_PROFILE)))
 
     from ai.prompts import extract_profile
 
@@ -129,8 +130,8 @@ async def test_extract_profile_typical(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_extract_profile_minimal(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_extract_profile_minimal(mock_anthropic, mock_log):
     """A minimal one-liner resume should not crash, and name should be populated."""
     minimal_profile = {
         "name": "John Doe",
@@ -142,7 +143,8 @@ async def test_extract_profile_minimal(mock_client, mock_log):
         "education": [],
         "previous_roles": [],
     }
-    mock_client.messages.create.return_value = _mock_response(json.dumps(minimal_profile))
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(json.dumps(minimal_profile)))
 
     from ai.prompts import extract_profile
 
@@ -158,14 +160,15 @@ async def test_extract_profile_minimal(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_extract_profile_retry(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_extract_profile_retry(mock_anthropic, mock_log):
     """When Claude returns invalid JSON on the first call, extract_profile retries and succeeds."""
     invalid_response = _mock_response("Sure! Here is the profile:\n{invalid json")
     valid_response = _mock_response(json.dumps(VALID_PROFILE))
 
     # First call → garbage, second call → valid JSON
-    mock_client.messages.create.side_effect = [invalid_response, valid_response]
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(side_effect=[invalid_response, valid_response])
 
     from ai.prompts import extract_profile
 
@@ -337,11 +340,12 @@ def _build_mock_questions(
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_generate_personalised(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_generate_personalised(mock_anthropic, mock_log):
     """Questions should reference the candidate's actual skills and project names."""
     questions = _build_mock_questions(profile=PERSONALISED_PROFILE)
-    mock_client.messages.create.return_value = _mock_response(json.dumps(questions))
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(json.dumps(questions)))
 
     from ai.prompts import generate_questions
 
@@ -360,11 +364,12 @@ async def test_generate_personalised(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_generate_count(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_generate_count(mock_anthropic, mock_log):
     """generate_questions must return exactly 7 questions."""
     questions = _build_mock_questions()
-    mock_client.messages.create.return_value = _mock_response(json.dumps(questions))
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(json.dumps(questions)))
 
     from ai.prompts import generate_questions
 
@@ -375,11 +380,12 @@ async def test_generate_count(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_generate_follow_ups(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_generate_follow_ups(mock_anthropic, mock_log):
     """Every question must have a non-empty 'follow_up' string."""
     questions = _build_mock_questions()
-    mock_client.messages.create.return_value = _mock_response(json.dumps(questions))
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(json.dumps(questions)))
 
     from ai.prompts import generate_questions
 
@@ -393,8 +399,8 @@ async def test_generate_follow_ups(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_generate_coding_easy(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_generate_coding_easy(mock_anthropic, mock_log):
     """For a junior candidate (years_of_experience=1), the coding question should be easy-tier."""
     junior_profile = {
         **PERSONALISED_PROFILE,
@@ -409,7 +415,8 @@ async def test_generate_coding_easy(mock_client, mock_log):
         profile=junior_profile,
         coding_text=easy_coding_text,
     )
-    mock_client.messages.create.return_value = _mock_response(json.dumps(questions))
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(json.dumps(questions)))
 
     from ai.prompts import generate_questions
 
@@ -504,12 +511,13 @@ def _build_raw_answers_batch(count: int = 7) -> list[dict]:
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_evaluate_strong(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_evaluate_strong(mock_anthropic, mock_log):
     """A detailed, technically deep answer should score >= 7."""
-    mock_client.messages.create.return_value = _mock_response(
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(
         json.dumps(STRONG_EVAL_RESPONSE)
-    )
+    ))
 
     from ai.prompts import evaluate_all_answers
 
@@ -533,12 +541,13 @@ async def test_evaluate_strong(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_evaluate_weak(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_evaluate_weak(mock_anthropic, mock_log):
     """'I don't know' should score <= 3."""
-    mock_client.messages.create.return_value = _mock_response(
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(
         json.dumps(WEAK_EVAL_RESPONSE)
-    )
+    ))
 
     from ai.prompts import evaluate_all_answers
 
@@ -553,10 +562,11 @@ async def test_evaluate_weak(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_evaluate_all_never_raises(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_evaluate_all_never_raises(mock_anthropic, mock_log):
     """Even if Claude throws on every call, evaluate_all_answers returns safe defaults — never crashes."""
-    mock_client.messages.create.side_effect = RuntimeError("API connection failed")
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(side_effect=RuntimeError("API connection failed"))
 
     from ai.prompts import evaluate_all_answers
 
@@ -574,12 +584,13 @@ async def test_evaluate_all_never_raises(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.prompts.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_evaluate_all_count(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_evaluate_all_count(mock_anthropic, mock_log):
     """Pass 7 answers → get exactly 7 evaluated answers back."""
-    mock_client.messages.create.return_value = _mock_response(
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_mock_response(
         json.dumps(STRONG_EVAL_RESPONSE)
-    )
+    ))
 
     from ai.prompts import evaluate_all_answers
 
@@ -602,8 +613,8 @@ async def test_evaluate_all_count(mock_client, mock_log):
 
 @pytest.mark.asyncio
 @patch("ai.voice_providers.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_process_voice_turn_empty(mock_client, mock_log):
+@patch("anthropic.AsyncAnthropic")
+async def test_process_voice_turn_empty(mock_anthropic, mock_log):
     """Empty audio should immediately return a fallback string without calling Claude."""
     from ai.prompts import process_voice_turn
 
@@ -611,7 +622,7 @@ async def test_process_voice_turn_empty(mock_client, mock_log):
 
     assert "repeat" in result["text"].lower()
     assert result["audio_bytes"] is None
-    mock_client.messages.create.assert_not_called()
+    mock_anthropic.return_value.messages.create.assert_not_called()
     mock_log.assert_not_awaited()
 
 
@@ -634,16 +645,17 @@ class _MockResponseWithAudio:
         self.content = [_MockTextBlock(text), _MockAudioBlock(audio_base64)]
 
 @pytest.mark.asyncio
-@patch("ai.voice_providers.log_ai_call", new_callable=AsyncMock)
-@patch("ai.prompts.client")
-async def test_process_voice_turn_valid(mock_client, mock_log):
+@patch("ai.llm_providers.log_ai_call", new_callable=AsyncMock)
+@patch("anthropic.AsyncAnthropic")
+async def test_process_voice_turn_valid(mock_anthropic, mock_log):
     """Valid audio should be wrapped in a multimodal audio block and appended to history.
     Claude's response should be parsed for both text and audio blocks."""
     import base64
     fake_audio = b"fake_claude_audio_response"
     encoded_audio = base64.b64encode(fake_audio).decode("utf-8")
     
-    mock_client.messages.create.return_value = _MockResponseWithAudio("Sure, I can hear you.", encoded_audio)
+    mock_client = mock_anthropic.return_value
+    mock_client.messages.create = AsyncMock(return_value=_MockResponseWithAudio("Sure, I can hear you.", encoded_audio))
 
     from ai.prompts import process_voice_turn
 

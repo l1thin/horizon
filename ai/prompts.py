@@ -3,13 +3,12 @@
 # ALL Claude API calls live here only.
 # This is the single gateway to the Anthropic API for the entire project.
 
-import anthropic
 import json
 import os
 import base64
 from ai.logger import log_ai_call
-
-client = anthropic.Anthropic(api_key=os.environ.get("CLAUDE_API_KEY"))
+import ai.config  # ensures config and keys are loaded
+from ai.llm_providers import get_llm_provider
 
 
 # ─────────────────────────────────────────
@@ -74,13 +73,12 @@ async def extract_profile(resume_text: str) -> dict:
     """
     messages = [{"role": "user", "content": resume_text}]
 
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1500,
-        system=PROFILE_EXTRACTION_SYSTEM,
+    provider = get_llm_provider()
+    raw = await provider.generate_text(
+        system_prompt=PROFILE_EXTRACTION_SYSTEM,
         messages=messages,
+        max_tokens=1500,
     )
-    raw = response.content[0].text
     await log_ai_call(
         "extract_profile",
         {"resume_length": len(resume_text)},
@@ -98,13 +96,11 @@ async def extract_profile(resume_text: str) -> dict:
                 "content": "Your previous response was not valid JSON. Return only the JSON object, no other text.",
             }
         )
-        retry = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1500,
-            system=PROFILE_EXTRACTION_SYSTEM,
+        retry_raw = await provider.generate_text(
+            system_prompt=PROFILE_EXTRACTION_SYSTEM,
             messages=messages,
+            max_tokens=1500,
         )
-        retry_raw = retry.content[0].text
         try:
             return json.loads(retry_raw)
         except json.JSONDecodeError:
@@ -186,13 +182,12 @@ Target Company: {target_company or "Not specified"}
 
 Generate the interview plan now."""
 
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=3000,
-        system=QUESTION_GENERATION_SYSTEM,
+    provider = get_llm_provider()
+    raw = await provider.generate_text(
+        system_prompt=QUESTION_GENERATION_SYSTEM,
         messages=[{"role": "user", "content": user_prompt}],
+        max_tokens=3000,
     )
-    raw = response.content[0].text
     await log_ai_call(
         "generate_questions",
         {
@@ -218,9 +213,7 @@ Generate the interview plan now."""
     return questions
 
 
-# ─────────────────────────────────────────
-# PROMPT 3: POST-SESSION ANSWER EVALUATION
-# ─────────────────────────────────────────
+
 
 ANSWER_EVALUATION_SYSTEM = """
 You are a calibrated interview scoring engine for Horizon.
@@ -284,13 +277,12 @@ Candidate's Answer:
 Evaluate this answer."""
 
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=800,
-            system=ANSWER_EVALUATION_SYSTEM,
+        provider = get_llm_provider()
+        raw = await provider.generate_text(
+            system_prompt=ANSWER_EVALUATION_SYSTEM,
             messages=[{"role": "user", "content": user_prompt}],
+            max_tokens=800,
         )
-        raw = response.content[0].text
         result = json.loads(raw)
         # Validate required fields
         assert "score" in result and 0 <= result["score"] <= 10
@@ -337,11 +329,6 @@ async def evaluate_all_answers(session_id: str, raw_answers: list) -> list:
     return evaluated
 
 
-# ─────────────────────────────────────────
-# PROMPT 4: SKILL GAP ANALYSIS
-# ─────────────────────────────────────────
-
-
 async def compute_skill_gaps(session_id: str, evaluated_answers: list) -> list:
     """
     Computes top 3 skill gaps from evaluated answers.
@@ -371,10 +358,6 @@ async def compute_skill_gaps(session_id: str, evaluated_answers: list) -> list:
     return gaps[:3]
 
 
-# ─────────────────────────────────────────
-# PROMPT 5: LIVE VOICE INTERVIEW TURN
-# ─────────────────────────────────────────
-
 LIVE_INTERVIEW_SYSTEM = """
 You are a conversational technical interviewer for Horizon.
 You are currently conducting a live voice interview with a candidate.
@@ -388,8 +371,6 @@ RULES:
 """
 
 
-from ai.voice_providers import get_voice_provider
-
 async def process_voice_turn(
     session_id: str,
     audio_bytes: bytes,
@@ -401,7 +382,7 @@ async def process_voice_turn(
     Supported models: Claude, OpenAI GPT, Gemini.
     Returns: {"text": str, "audio_bytes": bytes | None}
     """
-    provider = get_voice_provider(client=client)
+    provider = get_llm_provider()
     return await provider.process_voice_turn(
         session_id=session_id,
         audio_bytes=audio_bytes,
