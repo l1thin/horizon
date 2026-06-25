@@ -10,7 +10,7 @@ import ProgressPill from './ProgressPill';
 import LiveTranscript from './LiveTranscript';
 import StarHintCard from './StarHintCard';
 
-export default function InterviewScreen({ sessionId, onCodingQuestion, onSessionEnd }) {
+export default function InterviewScreen({ sessionId, sendMessage, connectionStatus, incomingMessage, onCodingQuestion, onSessionEnd }) {
   const [orbState, setOrbState] = useState(ORB_STATE.IDLE);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
@@ -50,10 +50,11 @@ export default function InterviewScreen({ sessionId, onCodingQuestion, onSession
     }
   }, [markQuestionStart, onCodingQuestion, onSessionEnd, sessionId, speak]);
 
-  const { sendMessage, connectionStatus } = useWebSocket({
-    sessionId,
-    onMessage: handleMessage
-  });
+  useEffect(() => {
+    if (incomingMessage) {
+      handleMessage(incomingMessage);
+    }
+  }, [incomingMessage, handleMessage]);
 
   const currentQuestionRef = useRef(currentQuestion);
   useEffect(() => {
@@ -115,7 +116,9 @@ export default function InterviewScreen({ sessionId, onCodingQuestion, onSession
 
       <ProgressPill />
       
-      <Orb state={orbState} onClick={handleOrbClick} />
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+        <Orb state={orbState} onClick={handleOrbClick} />
+      </div>
       
       {currentQuestion && currentQuestion.type === 'behavioral' && (
         <StarHintCard />

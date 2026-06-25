@@ -1,0 +1,17 @@
+@media print {
+  body {
+    background-color: #ffffff !important;
+  }
+  .feedback-dashboard {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  .print-btn-container {
+    display: none !important;
+  }
+  * {
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}

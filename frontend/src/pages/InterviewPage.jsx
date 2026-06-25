@@ -1,29 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import InterviewScreen from '../components/interview/InterviewScreen';
+import CodingSection from '../components/coding/CodingSection';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { WS_TYPE } from '../constants/wsMessageTypes';
 
 export default function InterviewPage({ sessionId }) {
   const [showCoding, setShowCoding] = useState(false);
   const [codingPayload, setCodingPayload] = useState(null);
+  const [interviewScreenMsg, setInterviewScreenMsg] = useState(null);
 
-  const handleCodingQuestion = (payload) => {
-    setCodingPayload(payload);
-    setShowCoding(true);
-  };
+  const handleMessage = useCallback((msg) => {
+    if (msg.type === WS_TYPE.CODING) {
+      setCodingPayload(msg.payload);
+      setShowCoding(true);
+    } else if (msg.type === WS_TYPE.END) {
+      console.log("Session Ended:", sessionId);
+    } else {
+      // Pass down to InterviewScreen
+      setInterviewScreenMsg(msg);
+    }
+  }, [sessionId]);
 
-  const handleSessionEnd = (id) => {
-    // Parent handles this usually, or we can just log for now
-    console.log("Session Ended:", id);
+  const { sendMessage, connectionStatus } = useWebSocket({
+    sessionId,
+    onMessage: handleMessage
+  });
+
+  const handleCodingComplete = () => {
+    setShowCoding(false);
   };
 
   if (showCoding) {
-    return <div style={{ color: 'white', textAlign: 'center', marginTop: '2rem' }}>Coding Section (Stub) - Payload: {JSON.stringify(codingPayload)}</div>;
+    return (
+      <CodingSection 
+        question={codingPayload} 
+        sessionId={sessionId} 
+        preferredLanguage="python" 
+        sendMessage={sendMessage}
+        onComplete={handleCodingComplete}
+      />
+    );
   }
 
   return (
     <InterviewScreen 
       sessionId={sessionId} 
-      onCodingQuestion={handleCodingQuestion} 
-      onSessionEnd={handleSessionEnd} 
+      sendMessage={sendMessage}
+      connectionStatus={connectionStatus}
+      incomingMessage={interviewScreenMsg}
     />
   );
 }
