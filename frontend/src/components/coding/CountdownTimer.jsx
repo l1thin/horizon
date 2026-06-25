@@ -10,7 +10,7 @@ export default function CountdownTimer({ secondsLeft, isExpired }) {
   const seconds = secondsLeft % 60;
   const formatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-  let color = '#ffffff';
+  let color = '#111827';
   let className = 'countdown-timer';
 
   if (secondsLeft < 30) {
