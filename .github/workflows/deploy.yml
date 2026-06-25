@@ -1,0 +1,46 @@
+# Horizon - deploy.yml - owned by Dev 3 (AI + Infra)
+#
+# CI pipeline: test AI → test backend → deploy to Railway on push to main.
+
+name: Horizon — Deploy Backend
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install -r backend/requirements.txt anthropic asyncpg
+
+      - name: Run AI tests
+        run: PYTHONPATH=. pytest ai/tests/ -v
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+
+      - name: Run backend tests
+        run: PYTHONPATH=. pytest backend/tests/ -v
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          REDIS_URL: redis://localhost:6379
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: railwayapp/railway-deploy@v1
+        with:
+          railway-token: ${{ secrets.RAILWAY_TOKEN }}
+          service: horizon-backend
