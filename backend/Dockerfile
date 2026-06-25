@@ -1,1 +1,1 @@
-# AntiGravity - Dockerfile - owned by Dev 2 (Backend)
+# Horizon - Dockerfile - owned by Dev 2 (Backend)

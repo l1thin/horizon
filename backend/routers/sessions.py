@@ -1,1 +1,1 @@
-# AntiGravity - sessions.py - owned by Dev 2 (Backend)
+# Horizon - sessions.py - owned by Dev 2 (Backend)

@@ -1,8 +1,12 @@
-# AntiGravity - requirements.txt - owned by Dev 2 (Backend)
+# Horizon - requirements.txt - owned by Dev 2 (Backend)
 fastapi
 uvicorn
 python-multipart
-PyMuPDF
+pymupdf
 python-docx
-pytest
+pydantic
+redis
+asyncpg
+supabase
 httpx
+python-dotenv
