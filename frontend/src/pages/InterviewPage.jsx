@@ -1,1 +1,1 @@
-// AntiGravity - InterviewPage.jsx - owned by Dev 1 (Frontend)
+// Horizon - InterviewPage.jsx - owned by Dev 1 (Frontend)

@@ -1,1 +1,1 @@
-// AntiGravity - formatScore.js - owned by Dev 1 (Frontend)
+// Horizon - formatScore.js - owned by Dev 1 (Frontend)

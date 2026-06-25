@@ -1,1 +1,1 @@
-// AntiGravity - LiveTranscript.jsx - owned by Dev 1 (Frontend)
+// Horizon - LiveTranscript.jsx - owned by Dev 1 (Frontend)

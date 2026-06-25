@@ -1,6 +1,1 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [react()],
-});
+// Horizon - vite.config.js - owned by Dev 1 (Frontend)

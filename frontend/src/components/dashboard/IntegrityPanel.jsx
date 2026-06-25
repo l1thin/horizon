@@ -1,1 +1,1 @@
-// AntiGravity - IntegrityPanel.jsx - owned by Dev 1 (Frontend)
+// Horizon - IntegrityPanel.jsx - owned by Dev 1 (Frontend)
