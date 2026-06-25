@@ -59,7 +59,7 @@ export default function CodingSection({ question, sessionId, preferredLanguage, 
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', backgroundColor: '#fcfcfc', textAlign: 'left' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', backgroundColor: 'transparent', textAlign: 'left' }}>
       {toastMessage && (
         <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: '#ef4444', color: 'white', padding: '10px 20px', borderRadius: '20px', fontWeight: 'bold', zIndex: 1000 }}>
           {toastMessage}

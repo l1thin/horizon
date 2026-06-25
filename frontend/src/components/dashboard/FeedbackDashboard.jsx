@@ -15,7 +15,7 @@ export default function FeedbackDashboard({ sessionId }) {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#fcfcfc', color: '#111827' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'transparent', color: '#111827' }}>
         <div style={{ width: '40px', height: '40px', border: '3px solid #e5e7eb', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }}></div>
         <h2>Evaluating your answers…</h2>
         <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
@@ -32,7 +32,7 @@ export default function FeedbackDashboard({ sessionId }) {
   const scoreColor = '#111827';
 
   return (
-    <div className="feedback-dashboard" style={{ backgroundColor: '#fcfcfc', minHeight: '100vh', padding: '40px 20px', color: '#111827', textAlign: 'left' }}>
+    <div className="feedback-dashboard" style={{ backgroundColor: 'transparent', minHeight: '100vh', padding: '40px 20px', color: '#111827', textAlign: 'left' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         
         <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>

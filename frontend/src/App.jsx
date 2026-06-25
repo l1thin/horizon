@@ -4,6 +4,7 @@ import LoadingPage from './pages/LoadingPage';
 import LanguagePage from './pages/LanguagePage';
 import InterviewPage from './pages/InterviewPage';
 import ReportPage from './pages/ReportPage';
+import AntiGravityBackground from './components/AntiGravityBackground';
 
 export default function App() {
   const [stage, setStage] = useState('hero'); // "hero" | "loading" | "language" | "interview" | "report"
@@ -25,6 +26,7 @@ export default function App() {
 
   return (
     <>
+      <AntiGravityBackground />
       {stage === 'hero' && <HeroPage onSessionCreated={handleSessionCreated} />}
       {stage === 'loading' && <LoadingPage sessionId={sessionId} onReady={handleReady} />}
       {stage === 'language' && <LanguagePage sessionId={sessionId} onInterviewStart={handleInterviewStart} />}
