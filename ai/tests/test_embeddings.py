@@ -52,26 +52,37 @@ def test_cosine_zero_vector():
     assert cosine_similarity([0.0, 0.0], [1.0, 2.0]) == 0.0
 
 
+from unittest.mock import AsyncMock, patch
+
 # ---------------------------------------------------------------------------
 # get_embedding
 # ---------------------------------------------------------------------------
 
 
-def test_get_embedding_returns_list():
+@pytest.mark.asyncio
+@patch("openai.AsyncOpenAI")
+async def test_get_embedding_returns_list(mock_openai):
     """get_embedding should return a list of floats."""
-    vec = get_embedding("Python")
+    mock_client = AsyncMock()
+    mock_client.embeddings.create.return_value.data = [AsyncMock(embedding=[0.1, 0.2, 0.3])]
+    mock_openai.return_value = mock_client
+
+    vec = await get_embedding("Python")
     assert isinstance(vec, list)
     assert all(isinstance(v, float) for v in vec)
 
 
-def test_get_embedding_deterministic():
-    """Same input should produce the same embedding (placeholder is hash-based)."""
-    assert get_embedding("Python") == get_embedding("Python")
+@pytest.mark.asyncio
+@patch("openai.AsyncOpenAI")
+async def test_get_embedding_deterministic(mock_openai):
+    """Same input should produce the same mocked embedding."""
+    mock_client = AsyncMock()
+    mock_client.embeddings.create.return_value.data = [AsyncMock(embedding=[0.1, 0.2, 0.3])]
+    mock_openai.return_value = mock_client
 
-
-def test_get_embedding_different_inputs():
-    """Different inputs should produce different embeddings."""
-    assert get_embedding("Python") != get_embedding("Java")
+    vec1 = await get_embedding("Python")
+    vec2 = await get_embedding("Python")
+    assert vec1 == vec2
 
 
 # ---------------------------------------------------------------------------
@@ -79,9 +90,14 @@ def test_get_embedding_different_inputs():
 # ---------------------------------------------------------------------------
 
 
-def test_compute_skill_gap_vectors_structure():
+@pytest.mark.asyncio
+@patch("ai.embeddings.get_embedding", new_callable=AsyncMock)
+async def test_compute_skill_gap_vectors_structure(mock_get_embedding):
     """Each result should have the expected keys."""
-    results = compute_skill_gap_vectors(
+    # Mock embeddings
+    mock_get_embedding.side_effect = lambda x: [0.1, 0.2]
+    
+    results = await compute_skill_gap_vectors(
         candidate_skills=["Python", "SQL"],
         required_skills=["Python", "TensorFlow"],
     )
@@ -93,9 +109,14 @@ def test_compute_skill_gap_vectors_structure():
         assert "gap_score" in r
 
 
-def test_exact_match_has_high_similarity():
+@pytest.mark.asyncio
+@patch("ai.embeddings.get_embedding", new_callable=AsyncMock)
+async def test_exact_match_has_high_similarity(mock_get_embedding):
     """When a required skill is also a candidate skill, similarity should be 1.0."""
-    results = compute_skill_gap_vectors(
+    # Ensure they return the exact same vector for "Python"
+    mock_get_embedding.return_value = [0.1, 0.2]
+    
+    results = await compute_skill_gap_vectors(
         candidate_skills=["Python"],
         required_skills=["Python"],
     )

@@ -34,19 +34,30 @@ def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
 # ---------------------------------------------------------------------------
 
 
-def get_embedding(text: str) -> list[float]:
-    """Return an embedding vector for the given text.
-
-    TODO: Replace this stub with a real embedding provider
-    (e.g. OpenAI text-embedding-3-small, Cohere embed-v3, or a local model).
-    """
-    # Placeholder: deterministic hash-based fake embedding for dev/testing.
-    import hashlib
-
-    digest = hashlib.sha256(text.encode()).hexdigest()
-    # Produce a 128-dim pseudo-vector from the hash
-    vec = [int(digest[i : i + 2], 16) / 255.0 for i in range(0, min(len(digest), 256), 2)]
-    return vec
+async def get_embedding(text: str) -> list[float]:
+    """Return an embedding vector for the given text."""
+    import os
+    
+    provider = os.environ.get("LLM_PROVIDER", "openai").lower()
+    
+    if provider == "gemini":
+        import google.generativeai as genai
+        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+        result = genai.embed_content(
+            model="models/text-embedding-004",
+            content=text,
+            task_type="retrieval_document",
+        )
+        return result['embedding']
+    else:
+        # Default to OpenAI for embeddings (since Claude doesn't have native embeddings)
+        import openai
+        client = openai.AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        response = await client.embeddings.create(
+            input=text,
+            model="text-embedding-3-small"
+        )
+        return response.data[0].embedding
 
 
 # ---------------------------------------------------------------------------
@@ -54,7 +65,7 @@ def get_embedding(text: str) -> list[float]:
 # ---------------------------------------------------------------------------
 
 
-def compute_skill_gap_vectors(
+async def compute_skill_gap_vectors(
     candidate_skills: list[str],
     required_skills: list[str],
 ) -> list[dict[str, Any]]:
@@ -65,12 +76,20 @@ def compute_skill_gap_vectors(
 
     ``gap_score`` is ``1 - similarity``; higher means larger gap.
     """
-    candidate_vecs = [(skill, get_embedding(skill)) for skill in candidate_skills]
+    import asyncio
+    
+    # Fetch all candidate embeddings concurrently
+    cand_tasks = [get_embedding(skill) for skill in candidate_skills]
+    cand_embs = await asyncio.gather(*cand_tasks)
+    candidate_vecs = list(zip(candidate_skills, cand_embs))
+
+    # Fetch all required embeddings concurrently
+    req_tasks = [get_embedding(skill) for skill in required_skills]
+    req_embs = await asyncio.gather(*req_tasks)
+
     results: list[dict[str, Any]] = []
 
-    for req_skill in required_skills:
-        req_vec = get_embedding(req_skill)
-
+    for req_skill, req_vec in zip(required_skills, req_embs):
         best_match = ""
         best_sim = -1.0
 
