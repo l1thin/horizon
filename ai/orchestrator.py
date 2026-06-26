@@ -209,3 +209,40 @@ class InterviewOrchestrator:
             "uncovered_candidate_skills": list(uncovered_skills),
             "top_3_vector_skill_gaps": top_skill_gaps,
         }
+
+    async def extract_profile(self, resume_text: str) -> dict:
+        system_prompt = """
+        You are an expert resume parser for Horizon, an AI interview platform.
+        Extract the candidate's profile information from the provided resume text.
+        
+        CRITICAL: Based on their current role and experience, infer the core technical 
+        requirements for the job they are likely interviewing for and list them under 'inferred_target_skills'.
+        
+        Output ONLY valid JSON matching this schema:
+        {
+          "name": "string or null",
+          "current_role": "string or null",
+          "years_of_experience": "number or null",
+          "candidate_skills": ["string"],
+          "inferred_target_skills": ["string"]
+        }
+        """
+        
+        raw_response = await self.text_provider.generate_text(
+            system_prompt=system_prompt,
+            messages=[{"role": "user", "content": resume_text}],
+            max_tokens=1000,
+        )
+        
+        try:
+            clean_json = self._extract_clean_json(raw_response)
+            return json.loads(clean_json)
+        except Exception as e:
+            print(f"Profile extraction failed: {e}")
+            return {
+                "name": "Error Profile",
+                "current_role": "Error Profile",
+                "years_of_experience": 0,
+                "candidate_skills": [],
+                "inferred_target_skills": []
+            }  
