@@ -1,17 +1,8 @@
-# Horizon - embeddings.py - owned by Dev 3 (AI + Infra)
-#
-# Skill gap computation using vector embeddings.
-# Compares candidate skill vectors against job-requirement vectors to surface gaps.
-
+# ai/embeddings.py
 from __future__ import annotations
 
 import math
 from typing import Any
-
-
-# ---------------------------------------------------------------------------
-# Vector utilities
-# ---------------------------------------------------------------------------
 
 
 def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
@@ -32,27 +23,32 @@ def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
 async def get_embedding(text: str) -> list[float]:
     """Return an embedding vector for the given text."""
     import os
-    
-    provider = os.environ.get("LLM_PROVIDER", "openai").lower()
-    
+
+    provider = os.environ.get("VOICE_PROVIDER", "openai").lower()
+
     if provider == "gemini":
-        import google.generativeai as genai
-        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-        result = genai.embed_content(
-            model="models/text-embedding-004",
-            content=text,
-            task_type="retrieval_document",
+        from google import genai
+
+        # Instantiate the modern async Client
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY")).aio
+
+        response = await client.models.embed_content(
+            model="gemini-embedding-001",
+            contents=text,
         )
-        return result['embedding']
+
+        if response.embeddings and response.embeddings[0].values:
+            return response.embeddings[0].values
+        else:
+            raise ValueError(f"Couldn't get Embeddings for provider: {provider}")
     else:
         import openai
+
         client = openai.AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         response = await client.embeddings.create(
-            input=text,
-            model="text-embedding-3-small"
+            input=text, model="text-embedding-3-small"
         )
         return response.data[0].embedding
-
 
 
 async def compute_skill_gap_vectors(
@@ -67,7 +63,19 @@ async def compute_skill_gap_vectors(
     ``gap_score`` is ``1 - similarity``; higher means larger gap.
     """
     import asyncio
-    
+
+    # Return early if candidate didn't demonstrate any skills to compare against
+    if not candidate_skills:
+        return [
+            {
+                "required_skill": req,
+                "best_match": "None",
+                "similarity": 0.0,
+                "gap_score": 1.0,
+            }
+            for req in required_skills
+        ]
+
     # Fetch all candidate embeddings concurrently
     cand_tasks = [get_embedding(skill) for skill in candidate_skills]
     cand_embs = await asyncio.gather(*cand_tasks)

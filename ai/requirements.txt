@@ -1,0 +1,4 @@
+groq
+openai
+google-genaiwebsockets
+pyaudio
