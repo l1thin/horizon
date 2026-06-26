@@ -3,10 +3,11 @@ import re
 
 from ai.config import Config
 from ai.embeddings import compute_skill_gap_vectors, rank_gaps
+from ai.piston import PistonExecutor
 from ai.providers import get_text_provider
+from ai.realtime import get_realtime_session
 from ai.realtime.base_session import BaseRealtimeSession
-from ai.realtime.session_gemini import GeminiRealtimeSession
-from ai.realtime.session_openai import OpenAIRealtimeSession
+from ai.sandbox import LocalPythonRunner
 
 
 class InterviewOrchestrator:
@@ -61,7 +62,11 @@ class InterviewOrchestrator:
             return []
 
     def create_voice_session(
-        self, session_id: str, current_question: str, accumulated_fact: dict
+        self,
+        session_id: str,
+        current_question: str,
+        accumulated_fact: dict,
+        turns: int,
     ) -> BaseRealtimeSession:
 
         facts_string = json.dumps(accumulated_fact, indent=2)
@@ -81,13 +86,8 @@ class InterviewOrchestrator:
                 3. If they mention a technology listed in their context, weave it into your follow-ups!
                 """
 
-        provider = Config.VOICE_PROVIDER
-        if provider == "openai":
-            return OpenAIRealtimeSession(session_id, system_prompt, turns=3)
-        elif provider == "gemini":
-            return GeminiRealtimeSession(session_id, system_prompt, turns=3)
-        else:
-            raise ValueError("Unsupported Realtime Provider configured.")
+        provider = get_realtime_session(session_id, system_prompt, turns=turns)
+        return provider
 
     async def extract_facts_from_transcript(self, transcript: list[dict]) -> dict:
         system_prompt = """
@@ -209,3 +209,186 @@ class InterviewOrchestrator:
             "uncovered_candidate_skills": list(uncovered_skills),
             "top_3_vector_skill_gaps": top_skill_gaps,
         }
+
+    async def extract_profile(self, resume_text: str) -> dict:
+        system_prompt = """
+        You are an expert resume parser for Horizon, an AI interview platform.
+        Extract the candidate's profile information from the provided resume text.
+
+        CRITICAL: Based on their current role and experience, infer the core technical
+        requirements for the job they are likely interviewing for and list them under 'inferred_target_skills'.
+
+        Output ONLY valid JSON matching this schema:
+        {
+          "name": "string or null",
+          "current_role": "string or null",
+          "years_of_experience": "number or null",
+          "candidate_skills": ["string"],
+          "inferred_target_skills": ["string"]
+        }
+        """
+
+        raw_response = await self.text_provider.generate_text(
+            system_prompt=system_prompt,
+            messages=[{"role": "user", "content": resume_text}],
+            max_tokens=1000,
+        )
+
+        try:
+            clean_json = self._extract_clean_json(raw_response)
+            return json.loads(clean_json)
+        except Exception as e:
+            print(f"Profile extraction failed: {e}")
+            return {
+                "name": "Error Profile",
+                "current_role": "Error Profile",
+                "years_of_experience": 0,
+                "candidate_skills": [],
+                "inferred_target_skills": [],
+            }
+
+    async def generate_coding_challenge(self, inferred_skills: list[str]) -> dict:
+
+        skills_str = ", ".join(inferred_skills) if inferred_skills else ""
+
+        system_prompt = f"""
+        You are a Senior Engineering Manager. Generate ONE medium-difficulty coding challenge
+                that tests algorithmic thinking, relevant to these skills: {skills_str}.
+
+                The starter code MUST use a function named exactly `solve`.
+
+                Output ONLY valid JSON matching this schema:
+                {{
+                  "question_type": "coding",
+                  "title": "string (e.g., 'LRU Cache Implementation')",
+                  "base_question": "string (Full problem description and constraints)",
+                  "starter_code": "def solve(data):\n    # Write your solution here\n    pass\n"
+                }}
+        """
+
+        raw_response = await self.text_provider.generate_text(
+            system_prompt=system_prompt,
+            messages=[{"role": "user", "content": "Generate the coding challeng."}],
+            max_tokens=800,
+        )
+
+        try:
+            return json.loads(self._extract_clean_json(raw_response))
+        except Exception:
+            return {
+                "question_type": "coding",
+                "title": "Two Sum",
+                "base_question": "Given an array of integers and a target, return the indices of the two numbers that add up to the target.",
+                "starter_code": "def solve(nums, target):\n    pass\n",
+            }
+
+    async def _generate_dynamic_tests(self, question_text: str) -> str:
+        system_prompt = """
+        You are a QA Automation Engineer. I will give you a coding problem description.
+                The candidate's solution will be a Python function named `solve`.
+
+                Write exactly 5 standard Python `assert` statements to test edge cases, standard cases, and null cases.
+                Wrap them in a basic try/except block that prints 'ALL TESTS PASSED' if successful.
+
+                Output ONLY plain Python code. NO explanations. NO markdown formatting.
+        """
+
+        raw_resp = await self.text_provider.generate_text(
+            system_prompt=system_prompt,
+            messages=[{"role": "user", "content": f"Problem: {question_text}"}],
+            max_tokens=500,
+        )
+
+        clean_code = raw_resp.replace("```python", "").replace("```", "").strip()
+        return clean_code
+
+    async def evaluate_code_submission(
+        self,
+        question_text: str,
+        source_code: str,
+        transcript_history: list[dict],
+        language: str,
+    ) -> dict:
+
+        test_suite_code = await self._generate_dynamic_tests(question_text)
+
+        full_execution_code = "\n".join(
+            [source_code, "\n# --- AI GENERATED TESTS ---", test_suite_code]
+        )
+
+        piston_result = await LocalPythonRunner.run_code(language, full_execution_code)
+
+        system_prompt = """
+                You are a Senior Staff Engineer evaluating a candidate's coding interview.
+                You will receive the problem, their code, the sandbox execution results,
+                and their spoken transcript explaining their thought process.
+
+                Analyze for:
+                1. Correctness (Did it pass the tests?)
+                2. Time/Space Complexity (Big-O)
+                3. Communication (Did they explain their logic clearly in the transcript?)
+
+                Output ONLY valid JSON:
+                {
+                  "score": float (0.0 to 10.0),
+                  "passed_tests": boolean,
+                  "time_complexity": "string",
+                  "space_complexity": "string",
+                  "feedback": "string (1-2 sentences)",
+                  "optimal_solution_hint": "string (How could it be improved?)"
+                }
+                """
+
+        transcript_str = "\n".join(
+            [f"{m['role'].upper()}: {m['content']}" for m in transcript_history]
+        )
+        user_msg = f"PROBLEM:\n{question_text}\n\nCODE:\n{source_code}\n\nSANDBOX RESULT:\n{piston_result}\n\nTRANSCRIPT:\n{transcript_str}"
+
+        raw_resp = await self.text_provider.generate_text(
+            system_prompt=system_prompt,
+            messages=[{"role": "user", "content": user_msg}],
+            max_tokens=1000,
+        )
+
+        try:
+            review_json = json.loads(self._extract_clean_json(raw_resp))
+            review_json["execution_output"] = piston_result["output"]
+            return review_json
+        except Exception as e:
+            print(f"[CODE EVAL ERROR] {e}")
+            return {
+                "score": 0.0,
+                "feedback": "Evaluation engine failed.",
+                "passed_tests": False,
+            }
+
+    def create_coding_voice_session(
+        self, session_id: str, coding_challenge: dict, accumulated_fact: dict
+    ) -> BaseRealtimeSession:
+        """Spins up a specialized voice session designed to pair-program with the candidate."""
+        facts_string = json.dumps(accumulated_fact, indent=2)
+
+        q_title = coding_challenge.get("title", "Coding Challenge")
+        q_desc = coding_challenge.get("base_question", "")
+
+        system_prompt = f"""
+            You are a Senior Engineering Manager conducting the coding portion of the Horizon interview.
+
+            YOUR CURRENT GOAL: Introduce the coding challenge and act as a pair-programming interviewer.
+            The problem text is already visible on the candidate's screen in a code editor.
+
+            Problem Title: "{q_title}"
+            Problem Description: "{q_desc}"
+
+            RULES FOR THIS PHASE:
+            1. Keep your introduction brief (1-2 sentences).
+            2. Ask them to explain their algorithmic approach out loud before they start typing.
+            3. If they get stuck or ask for help, offer Socratic hints (ask guiding questions), DO NOT write the code for them.
+            4. Remind them to think about Time and Space Complexity.
+            5. Acknowledge that when they click submit, their code will run against hidden test cases.
+
+            CANDIDATE CONTEXT (from previous rounds):
+            {facts_string}
+            """
+
+        return get_realtime_session(session_id, system_prompt, turns=14)

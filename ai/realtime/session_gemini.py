@@ -18,11 +18,12 @@ class GeminiRealtimeSession(BaseRealtimeSession):
 
         self.live_session = None
         self.receive_task = None
+        self.setup_complete = asyncio.Event()
 
         self.turns = turns
 
     async def connect(self):
-
+        print(f"[DEBUG] Connecting to model: {self.model}")
         config = types.LiveConnectConfig(
             system_instruction=types.Content(
                 parts=[types.Part.from_text(text=self.system_prompt)]
@@ -34,24 +35,34 @@ class GeminiRealtimeSession(BaseRealtimeSession):
                     prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name="Aoede")
                 )
             ),
+            realtime_input_config=types.RealtimeInputConfig(
+                automatic_activity_detection=types.AutomaticActivityDetection(
+                    disabled=False,
+                )
+            ),
         )
         self.context_manager = self.client.live.connect(model=self.model, config=config)
         self.live_session = await self.context_manager.__aenter__()
+        print(type(self.live_session))
+        print(self.live_session)
 
-        self.receive_task = asyncio.create_task(self._recieve_loop())
+        self.receive_task = asyncio.create_task(self._receive_loop())
+        print(f"[DEBUG] ✅ Connected to {self.model}")
 
-    async def send_user_audio(self, pcm_audio_bytes: bytes):
-
-        if not self.live_session:
+    async def send_user_audio(self, pcm_audio_bytes: bytes, end_of_stream=False):
+        if self.live_session is None:
             return
-
-        await self.live_session.send(
-            input=types.LiveClientRealtimeInput(
-                media_chunks=[
-                    types.Blob(data=pcm_audio_bytes, mime_type="audio/pcm;rate=16000")
-                ]
+        await self.live_session.send_realtime_input(
+            audio=types.Blob(
+                data=pcm_audio_bytes,
+                mime_type="audio/pcm;rate=16000",
             )
         )
+
+        if (
+            end_of_stream
+        ):  # DO NOT SEND THEM TOGETHER , NEVER PUT STREAM END IN THE ABOVE SEND
+            await self.live_session.send_realtime_input(audio_stream_end=True)
 
     async def send_user_text(self, text: str):
         if not self.live_session:
@@ -62,9 +73,7 @@ class GeminiRealtimeSession(BaseRealtimeSession):
         await self.live_session.send(
             input=types.LiveClientContent(
                 turns=[
-                    types.Content(
-                        role="user", parts=[types.Part.from_text(text=text)]
-                    )
+                    types.Content(role="user", parts=[types.Part.from_text(text=text)])
                 ],
                 turn_complete=True,
             )
@@ -79,47 +88,47 @@ class GeminiRealtimeSession(BaseRealtimeSession):
                 pass
         self.live_session = None
 
-    async def _recieve_loop(self):
+    async def _receive_loop(self):
         if not self.live_session:
             return
         try:
             while self.live_session:
                 async for message in self.live_session.receive():
-                    if (
-                        message.server_content
-                        and message.server_content.model_turn
-                        and message.server_content.model_turn.parts
-                    ):
-                        for part in message.server_content.model_turn.parts:
+                    sc = message.server_content
+                    if not sc:
+                        continue
+
+                    # Audio chunks
+                    if sc.model_turn and sc.model_turn.parts:
+                        for part in sc.model_turn.parts:
                             if (
                                 part.inline_data
-                                and part.inline_data.data
                                 and self.on_audio_to_frontend
+                                and part.inline_data.data
                             ):
                                 await self.on_audio_to_frontend(part.inline_data.data)
-    
-                            elif part.text:
-                                self.history.append({"role": "model", "content": part.text})
-    
-                    if (
-                        message.server_content
-                        and message.server_content.output_transcription
-                    ):
-                        transcript_text = message.server_content.output_transcription.text
-                        if transcript_text:
+
+                    # Spoken transcript
+                    if sc.output_transcription:
+                        text = sc.output_transcription.text
+                        if text:
                             if self.history and self.history[-1]["role"] == "model":
-                                self.history[-1]["content"] += transcript_text
+                                self.history[-1]["content"] += text
                             else:
                                 self.history.append(
-                                    {"role": "model", "content": transcript_text}
+                                    {
+                                        "role": "model",
+                                        "content": text,
+                                    }
                                 )
-    
-                    if message.server_content and message.server_content.turn_complete:
+
+                    # End of turn
+                    if sc.turn_complete:
                         self.turn_count += 1
-                        
-                        await asyncio.sleep(1)
+
                         if self.on_turn_complete:
                             await self.on_turn_complete()
+
                         if self.turn_count >= self.turns:
                             if self.on_phase_complete:
                                 await self.on_phase_complete(self.history)
