@@ -1,0 +1,12 @@
+# Horizon - requirements.txt - owned by Dev 2 (Backend)
+fastapi
+uvicorn
+python-multipart
+pymupdf
+python-docx
+pydantic
+redis
+asyncpg
+supabase
+httpx
+python-dotenv

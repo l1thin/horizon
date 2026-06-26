@@ -1,1 +1,9 @@
-/* AntiGravity - Orb.css - owned by Dev 1 (Frontend) */
+.orb-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: auto;
+  position: relative;
+  width: 540px;
+  height: 540px;
+}
