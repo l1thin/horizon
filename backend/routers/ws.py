@@ -136,16 +136,36 @@ async def session_ws(websocket: WebSocket, session_id: str):
             pass
 
 async def run_post_session_eval(session_id: str, raw_answers: list, redis):
-    """Runs after WS closes. Calls Dev 3's evaluate_all_answers and stores report."""
+    """Runs after WS closes. Calls Dev 3's generate_final_scorecard and stores report."""
     try:
         try:
-            from ai.prompts import evaluate_all_answers
+            from ai.orchestrator import InterviewOrchestrator
         except ImportError:
             # Stub if missing
-            async def evaluate_all_answers(session_id, answers):
-                return []
-                
-        evaluated = await evaluate_all_answers(session_id, raw_answers)
+            pass
+            
+        orchestrator = InterviewOrchestrator()
+        
+        # Retrieve target skills
+        target_skills_raw = await redis.get(f"session:{session_id}:target_skills")
+        if target_skills_raw:
+            target_skills = json.loads(target_skills_raw)
+        else:
+            target_skills = []
+            
+        session_transcripts = []
+        for ans in raw_answers:
+            session_transcripts.append({
+                "question": ans["question_text"],
+                "type": ans["question_type"],
+                "history": [{"role": "user", "content": ans.get("transcript", "")}]
+            })
+            
+        evaluated = await orchestrator.generate_final_scorecard(
+            session_transcripts, 
+            target_job_skills=target_skills
+        )
+        
         await store_report(session_id, evaluated)
         await redis.set(f"session:{session_id}:status", "report_ready")
     except Exception as e:
