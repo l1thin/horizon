@@ -2,3 +2,5 @@ groq
 openai
 google-genaiwebsockets
 pyaudio
+scipy
+numpy

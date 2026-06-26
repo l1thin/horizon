@@ -102,7 +102,7 @@ async def run_master_test():
         print("=========================================================")
 
         session = orchestrator.create_voice_session(
-            s_id, q_text, accumulated_brain_state
+            s_id, q_text, accumulated_brain_state, 3
         )
 
         bytes_received = 0

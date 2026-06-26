@@ -8,9 +8,8 @@ class BaseRealtimeSession:
         self.turn_count = 0
 
         self.on_audio_to_frontend: Callable[[bytes], Awaitable[None]] | None = None
-        self.on_phase_complete: Callable[[list[dict]] , Awaitable[None]] | None = None
-        self.on_turn_complete: Callable[[] , Awaitable[None]] | None = None
-               
+        self.on_phase_complete: Callable[[list[dict]], Awaitable[None]] | None = None
+        self.on_turn_complete: Callable[[], Awaitable[None]] | None = None
 
         self.history = []
 
@@ -18,7 +17,9 @@ class BaseRealtimeSession:
         """Establish the WebSocket connection to the LLM provider."""
         raise NotImplementedError
 
-    async def send_user_audio(self, pcm_audio_bytes: bytes):
+    async def send_user_audio(
+        self, pcm_audio_bytes: bytes, end_of_stream: bool = False
+    ):
         """Stream raw user audio from the frontend to the LLM."""
         raise NotImplementedError
 

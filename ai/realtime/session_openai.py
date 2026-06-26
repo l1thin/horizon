@@ -41,8 +41,9 @@ class OpenAIRealtimeSession(BaseRealtimeSession):
         await self.ws.send(json.dumps(init_event))
 
         self.recieve_task = asyncio.create_task(self._receive_loop())
+        
 
-    async def send_user_audio(self, pcm_audio_bytes: bytes):
+    async def send_user_audio(self, pcm_audio_bytes: bytes, end_of_stream=False):
 
         if not self.ws:
             return

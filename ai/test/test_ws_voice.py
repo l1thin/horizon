@@ -50,7 +50,7 @@ async def main():
     """
 
     session = get_realtime_session(
-        "test_voice_01", system_prompt=prompt, max_phase_turns=1
+        "test_voice_01", system_prompt=prompt, turns=1
     )
 
     audio_byte_counter = 0
