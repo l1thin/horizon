@@ -1,5 +1,15 @@
 # Horizon - executor.py - owned by Dev 2 (Backend)
-import httpx
+import os
+
+try:
+    from ai.sandbox import LocalPythonRunner
+except ImportError:
+    pass
+
+try:
+    from ai.piston import PistonExecutor
+except ImportError:
+    pass
 
 # Piston language aliases
 SUPPORTED_LANGUAGES = {
@@ -10,54 +20,38 @@ SUPPORTED_LANGUAGES = {
 }
 
 async def execute_code(code: str, language: str, stdin: str = "") -> dict:
-    url = "https://emkc.org/api/v2/piston/execute"
-    
-    piston_lang = SUPPORTED_LANGUAGES.get(language)
-    if not piston_lang:
-        return {"status_description": "Unsupported language", "passed": False}
-    
-    payload = {
-        "language": piston_lang,
-        "version": "*",
-        "files": [
-            {
-                "content": code
-            }
-        ],
-        "stdin": stdin
-    }
-    
-    async with httpx.AsyncClient() as client:
+    # Normalize language
+    lang = SUPPORTED_LANGUAGES.get(language)
+    if not lang:
+        return {"status_description": "Unsupported language", "passed": False, "stdout": "", "stderr": ""}
+
+    if lang == "python":
+        # Use local python runner (fast, secure via sandbox, no network)
         try:
-            # We add a slight timeout because execution could take a couple seconds
-            response = await client.post(url, json=payload, timeout=15.0)
-            if response.status_code != 200:
-                return {"status_description": f"Failed to execute code: {response.status_code}", "passed": False}
-                
-            result = response.json()
-            
-            run_result = result.get("run", {})
-            compile_result = result.get("compile", {})
-            
-            # Check compilation first
-            if compile_result and compile_result.get("code") != 0:
-                return {
-                    "stdout": "",
-                    "stderr": compile_result.get("output", ""),
-                    "status_description": "Compilation Error",
-                    "passed": False
-                }
-                
-            stderr = run_result.get("stderr", "")
-            stdout = run_result.get("stdout", run_result.get("output", ""))
-            
-            passed = run_result.get("code") == 0 and not stderr.strip()
+            result = await LocalPythonRunner.run_code("python", code)
+            success = result.get("success", False)
+            output = result.get("output", "")
             
             return {
-                "stdout": stdout,
-                "stderr": stderr,
-                "status_description": "Accepted" if passed else "Runtime Error",
-                "passed": passed
+                "stdout": output if success else "",
+                "stderr": output if not success else "",
+                "status_description": "Accepted" if success else "Runtime Error",
+                "passed": success
             }
         except Exception as e:
-            return {"status_description": f"Error: {str(e)}", "passed": False}
+            return {"status_description": f"Local Executor Error: {str(e)}", "passed": False, "stdout": "", "stderr": str(e)}
+    else:
+        # Fallback to piston
+        try:
+            result = await PistonExecutor.run_code(lang, code)
+            success = result.get("success", False)
+            output = result.get("output", "")
+            
+            return {
+                "stdout": output if success else "",
+                "stderr": output if not success else "",
+                "status_description": "Accepted" if success else "Runtime Error",
+                "passed": success
+            }
+        except Exception as e:
+            return {"status_description": f"Piston Error: {str(e)}", "passed": False, "stdout": "", "stderr": str(e)}
