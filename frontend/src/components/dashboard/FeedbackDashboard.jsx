@@ -15,8 +15,8 @@ export default function FeedbackDashboard({ sessionId }) {
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'transparent', color: '#111827' }}>
-        <div style={{ width: '40px', height: '40px', border: '3px solid #e5e7eb', borderTopColor: '#111827', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }}></div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: 'transparent', color: '#ffffff' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid rgba(255, 255, 255, 0.2)', borderTopColor: '#ffffff', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '1rem' }}></div>
         <h2>Evaluating your answers…</h2>
         <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
       </div>
@@ -37,7 +37,7 @@ export default function FeedbackDashboard({ sessionId }) {
         
         <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
           <div>
-            <h1 style={{ margin: '0 0 10px 0', fontSize: '28px' }}>Interview Report</h1>
+            <h1 style={{ margin: '0 0 10px 0', fontSize: '28px', color: '#ffffff' }}>Interview Report</h1>
             <p style={{ color: '#6b7280', margin: 0 }}>Session: {sessionId}</p>
           </div>
           <div className="print-btn-container">
@@ -63,7 +63,7 @@ export default function FeedbackDashboard({ sessionId }) {
         <RadarChart questions={report.questions} />
         
         <div style={{ marginTop: '2rem' }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: '20px' }}>Question Breakdown</h3>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '20px', color: '#ffffff' }}>Question Breakdown</h3>
           {report.questions.map((q, i) => (
             <QuestionCard key={q.question_id} question={q} index={i} />
           ))}
