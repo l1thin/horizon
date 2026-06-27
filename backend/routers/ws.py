@@ -87,7 +87,7 @@ async def session_ws(websocket: WebSocket, session_id: str):
                 integrity = payload.get("integrity", {})
                 should_inject = (
                     integrity.get("think_time_ms", 9999) < 2000 or
-                    len(integrity.get("tab_switches", [])) > 0
+                    integrity.get("tab_switches", 0) > 0
                 )
                 if follow_up_text and should_inject and not pending_follow_up:
                     pending_follow_up = {
