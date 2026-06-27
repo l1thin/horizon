@@ -1,5 +1,9 @@
 import os
-import redis.asyncio as redis
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:
+    aioredis = None
 
 class MemoryRedis:
     def __init__(self):
@@ -19,9 +23,10 @@ def get_redis_client():
     global _client
     if _client is None:
         redis_url = os.getenv("REDIS_URL")
-        if redis_url:
-            _client = redis.from_url(redis_url)
+        if redis_url and aioredis:
+            _client = aioredis.from_url(redis_url)
         else:
-            print("WARNING: REDIS_URL not set. Using in-memory dict for Redis fallback.")
+            if not redis_url:
+                print("WARNING: REDIS_URL not set. Using in-memory dict for Redis fallback.")
             _client = MemoryRedis()
     return _client

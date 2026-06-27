@@ -11,6 +11,8 @@ export default function FeedbackDashboard({ sessionId }) {
   const { data: report, isLoading, error } = useQuery({
     queryKey: ['report', sessionId],
     queryFn: () => getReport(sessionId),
+    retry: 10,
+    retryDelay: (attempt) => Math.min(2000 * (attempt + 1), 10000),
   });
 
   if (isLoading) {

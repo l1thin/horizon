@@ -7,13 +7,14 @@ export function useWebSocket({ sessionId, onMessage }) {
   const maxAttempts = 3;
   const isComponentMounted = useRef(true);
   const onMessageRef = useRef(onMessage);
+  const sessionEnded = useRef(false);
 
   useEffect(() => {
     onMessageRef.current = onMessage;
   }, [onMessage]);
 
   const connect = useCallback(() => {
-    if (!sessionId || !isComponentMounted.current) return;
+    if (!sessionId || !isComponentMounted.current || sessionEnded.current) return;
     
     setConnectionStatus('connecting');
     const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:8000'}/ws/session/${sessionId}`;
@@ -43,6 +44,12 @@ export function useWebSocket({ sessionId, onMessage }) {
     ws.onclose = () => {
       if (!isComponentMounted.current) return;
       
+      // Don't reconnect if the session ended intentionally
+      if (sessionEnded.current) {
+        setConnectionStatus('ended');
+        return;
+      }
+
       if (reconnectAttempts.current < maxAttempts) {
         setConnectionStatus('disconnected');
         const delay = Math.pow(2, reconnectAttempts.current) * 2000;
@@ -63,6 +70,7 @@ export function useWebSocket({ sessionId, onMessage }) {
 
   useEffect(() => {
     isComponentMounted.current = true;
+    sessionEnded.current = false;
     connect();
 
     return () => {
@@ -82,5 +90,14 @@ export function useWebSocket({ sessionId, onMessage }) {
     }
   }, []);
 
-  return { sendMessage, connectionStatus };
+  const markSessionEnded = useCallback(() => {
+    sessionEnded.current = true;
+    if (wsRef.current) {
+      wsRef.current.onclose = null;
+      wsRef.current.close();
+    }
+    setConnectionStatus('ended');
+  }, []);
+
+  return { sendMessage, connectionStatus, markSessionEnded };
 }

@@ -2,10 +2,7 @@
 import json
 import uuid
 
-try:
-    from ai.orchestrator import InterviewOrchestrator
-except ImportError:
-    pass
+from ai.orchestrator import InterviewOrchestrator
 
 async def save_candidate_profile(session_id: str, profile: dict):
     # TODO: Implement DB save logic once schema and DB access is ready

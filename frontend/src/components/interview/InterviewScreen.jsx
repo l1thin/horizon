@@ -4,7 +4,7 @@ import { WS_TYPE } from '../../constants/wsMessageTypes';
 import ProgressPill from './ProgressPill';
 import StarHintCard from './StarHintCard';
 
-export default function InterviewScreen({ sessionId, sendMessage, connectionStatus, incomingMessage, onCodingQuestion, onSessionEnd }) {
+export default function InterviewScreen({ sessionId, sendMessage, connectionStatus, incomingMessage, clearIncomingMessage, onCodingQuestion, onSessionEnd }) {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [answerText, setAnswerText] = useState('');
@@ -34,8 +34,9 @@ export default function InterviewScreen({ sessionId, sendMessage, connectionStat
   useEffect(() => {
     if (incomingMessage) {
       handleMessage(incomingMessage);
+      if (clearIncomingMessage) clearIncomingMessage();
     }
-  }, [incomingMessage, handleMessage]);
+  }, [incomingMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const currentQuestionRef = useRef(currentQuestion);
   useEffect(() => {

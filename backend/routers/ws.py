@@ -3,19 +3,33 @@ import json
 import asyncio
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from ai.orchestrator import InterviewOrchestrator
+
 router = APIRouter()
 
 from db.redis import get_redis_client as get_redis
 
 # Placeholder dependencies and DB functions
 async def save_raw_answer(session_id: str, question_id: str, payload: dict):
-    pass
+    """Append raw answer to the session's answer list in the in-memory store."""
+    redis = get_redis()
+    raw = await redis.get(f"session:{session_id}:raw_answers")
+    answers = json.loads(raw) if raw else []
+    answers.append({"question_id": question_id, **payload})
+    await redis.set(f"session:{session_id}:raw_answers", json.dumps(answers), ex=7200)
 
 async def save_raw_code_answer(session_id: str, question_id: str, payload: dict):
-    pass
+    """Append raw code answer to the session's answer list in the in-memory store."""
+    redis = get_redis()
+    raw = await redis.get(f"session:{session_id}:raw_answers")
+    answers = json.loads(raw) if raw else []
+    answers.append({"question_id": question_id, "type": "coding", **payload})
+    await redis.set(f"session:{session_id}:raw_answers", json.dumps(answers), ex=7200)
 
 async def store_report(session_id: str, evaluated: list):
-    pass
+    """Store the evaluated report in the in-memory store so the report endpoint can serve it."""
+    redis = get_redis()
+    await redis.set(f"session:{session_id}:report", json.dumps(evaluated), ex=7200)
 
 @router.websocket("/ws/session/{session_id}")
 async def session_ws(websocket: WebSocket, session_id: str):
@@ -40,6 +54,7 @@ async def session_ws(websocket: WebSocket, session_id: str):
             if pending_follow_up:
                 current_q = pending_follow_up
                 pending_follow_up = None
+                state = "QUESTION"
             else:
                 if q_index >= len(questions):
                     # All questions done → trigger post-session eval + report
@@ -136,12 +151,6 @@ async def session_ws(websocket: WebSocket, session_id: str):
 async def run_post_session_eval(session_id: str, raw_answers: list, redis):
     """Runs after WS closes. Calls Dev 3's generate_final_scorecard and stores report."""
     try:
-        try:
-            from ai.orchestrator import InterviewOrchestrator
-        except ImportError:
-            # Stub if missing
-            pass
-            
         orchestrator = InterviewOrchestrator()
         
         # Retrieve target skills

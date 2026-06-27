@@ -3,6 +3,14 @@
 # from ai.prompts import extract_profile, generate_questions, evaluate_all_answers
 # Do NOT implement any Claude API logic in backend/ files.
 
+import sys
+from pathlib import Path
+
+# Add project root (parent of backend/) to sys.path so the ai/ package is importable
+PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
