@@ -30,7 +30,7 @@ export default function App() {
       {stage === 'hero' && <HeroPage onSessionCreated={handleSessionCreated} />}
       {stage === 'loading' && <LoadingPage sessionId={sessionId} onReady={handleReady} />}
       {stage === 'language' && <LanguagePage sessionId={sessionId} onInterviewStart={handleInterviewStart} />}
-      {stage === 'interview' && <InterviewPage sessionId={sessionId} />}
+      {stage === 'interview' && <InterviewPage sessionId={sessionId} onSessionEnd={() => setStage('report')} />}
       {stage === 'report' && <ReportPage sessionId={sessionId} />}
 
       {/* Temporary Dev Navigation */}

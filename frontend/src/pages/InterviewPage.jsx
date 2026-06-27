@@ -4,7 +4,7 @@ import CodingSection from '../components/coding/CodingSection';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { WS_TYPE } from '../constants/wsMessageTypes';
 
-export default function InterviewPage({ sessionId }) {
+export default function InterviewPage({ sessionId, onSessionEnd }) {
   const [showCoding, setShowCoding] = useState(false);
   const [codingPayload, setCodingPayload] = useState(null);
   const [interviewScreenMsg, setInterviewScreenMsg] = useState(null);
@@ -15,6 +15,7 @@ export default function InterviewPage({ sessionId }) {
       setShowCoding(true);
     } else if (msg.type === WS_TYPE.END) {
       console.log("Session Ended:", sessionId);
+      if (onSessionEnd) onSessionEnd();
     } else {
       // Pass down to InterviewScreen
       setInterviewScreenMsg(msg);

@@ -5,9 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 
 router = APIRouter()
 
-# Placeholder dependencies
-async def get_redis():
-    pass
+from db.redis import get_redis_client as get_redis
 
 async def get_db():
     pass
