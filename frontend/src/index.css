@@ -49,11 +49,12 @@ body::before {
   font-size: 72px;
   margin: 0 0 1rem 0;
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: 0.05em;
   color: #ffffff;
 }
 
 .hero-tagline {
+  font-family: 'Inter', sans-serif;
   font-size: 24px;
   color: #94a3b8;
   margin: 0 0 3rem 0;
