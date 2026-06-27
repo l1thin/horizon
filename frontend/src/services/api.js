@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || 'http://34.46.31.15:8000';
+const BASE = 'https://34.46.31.15:8000/';
 
 // Disable Demo Mode to make real backend calls
 const DEMO_MODE = false;
