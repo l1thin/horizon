@@ -1,6 +1,7 @@
 groq
 openai
-google-genaiwebsockets
+google-genai
+websockets
 pyaudio
 scipy
 numpy

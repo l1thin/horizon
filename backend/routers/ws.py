@@ -5,11 +5,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 router = APIRouter()
 
-# Placeholder dependencies and DB functions
-def get_redis():
-    # Return a dummy redis or real redis connection
-    pass
+from db.redis import get_redis_client as get_redis
 
+# Placeholder dependencies and DB functions
 async def save_raw_answer(session_id: str, question_id: str, payload: dict):
     pass
 

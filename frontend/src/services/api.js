@@ -1,7 +1,7 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || '';
+const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-// Enable Demo Mode to bypass real backend calls
-const DEMO_MODE = true;
+// Disable Demo Mode to make real backend calls
+const DEMO_MODE = false;
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
