@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const BASE = import.meta.env.VITE_API_BASE_URL || 'http://34.46.31.15:8000';
 
 // Disable Demo Mode to make real backend calls
 const DEMO_MODE = false;
@@ -10,7 +10,7 @@ export async function uploadResume(file) {
     await delay(1500); // simulate 1.5s network upload
     return { session_id: 'demo-session-123' };
   }
-  
+
   const form = new FormData();
   form.append('file', file);
   const res = await fetch(`${BASE}/api/upload-resume`, { method: 'POST', body: form });
@@ -56,7 +56,7 @@ export async function submitCode(sessionId, payload) {
     await delay(1500); // Simulate processing
     return { status: 'Accepted', stdout: 'Test cases passed: 5/5', stderr: '' };
   }
-  
+
   // Real implementation stub
   const res = await fetch(`${BASE}/api/sessions/${sessionId}/submit-code`, {
     method: 'POST',
@@ -109,7 +109,7 @@ export async function getReport(sessionId) {
       }
     };
   }
-  
+
   const res = await fetch(`${BASE}/api/sessions/${sessionId}/report`);
   if (!res.ok) throw new Error('Report fetch failed');
   return res.json();
