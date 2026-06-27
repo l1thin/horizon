@@ -29,7 +29,7 @@ export default function HeroPage({ onSessionCreated }) {
   return (
     <div className="hero-container">
       <h1 className="hero-title">Horizon</h1>
-      <p className="hero-tagline">Your AI interview partner. Speak freely.</p>
+      <p className="hero-tagline">Upload your resume to start a customized AI session tailored to your experience. Speak naturally to practice behavioral and technical questions in a realistic environment. Receive comprehensive feedback and detailed score reports to identify skill gaps.</p>
       
       <input 
         type="file" 

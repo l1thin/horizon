@@ -103,14 +103,14 @@ export default function InterviewScreen({ sessionId, sendMessage, connectionStat
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh', backgroundColor: '#0a0a14', color: '#fff', padding: '2rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: '100vh', backgroundColor: 'transparent', color: '#111827', padding: '2rem' }}>
       {toastMessage && (
         <div style={{ position: 'fixed', top: '20px', right: '20px', background: '#22c55e', color: 'white', padding: '10px 20px', borderRadius: '20px', fontWeight: 'bold' }}>
           {toastMessage}
         </div>
       )}
       
-      <div style={{ position: 'absolute', top: '20px', left: '20px', color: '#8f93a2' }}>
+      <div style={{ position: 'absolute', top: '20px', left: '20px', color: '#6b7280' }}>
         Status: {connectionStatus}
       </div>
 
