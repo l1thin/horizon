@@ -14,10 +14,11 @@
 .anti-gravity-card {
   width: 120px;
   height: 160px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: rgba(20, 15, 30, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -27,7 +28,7 @@
 
 .card-line {
   height: 8px;
-  background: #f3f4f6;
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 

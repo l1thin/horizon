@@ -1,13 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://db.onlinewebfonts.com/c/f21923cb0f60b46d41a66875255790b3?family=Neue+Haas+Grotesk+Display+Pro+65+Medium');
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #fcfcfc;
-  color: #111827;
+  background-color: #0a0514;
+  color: #cbd5e1;
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: 
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    radial-gradient(ellipse at bottom center, rgba(139, 92, 246, 0.3) 0%, rgba(10, 5, 20, 0) 70%);
+  background-size: 80px 100%, 100% 100%;
+  pointer-events: none;
 }
 
 * {
@@ -15,6 +30,10 @@ body {
 }
 
 /* Global Styles for Hero and Loading */
+.hero-container {
+  font-family: "Neue Haas Grotesk Display Pro 65 Medium", "Inter", sans-serif;
+}
+
 .hero-container, .loading-container {
   min-height: 100vh;
   display: flex;
@@ -31,49 +50,55 @@ body {
   margin: 0 0 1rem 0;
   font-weight: 700;
   letter-spacing: -0.04em;
-  color: #111827;
+  color: #ffffff;
 }
 
 .hero-tagline {
   font-size: 24px;
-  color: #6b7280;
+  color: #94a3b8;
   margin: 0 0 3rem 0;
   font-weight: 400;
   max-width: 600px;
 }
 
 .hero-button {
-  background: transparent;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 9999px;
   padding: 1rem 2.5rem;
+  font-family: inherit;
   font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px -3px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .hero-button:hover:not(:disabled) {
-  background: #f3f4f6;
-  color: #111827;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -4px rgba(139, 92, 246, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  filter: brightness(1.1);
 }
 
 .hero-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  transform: none;
+  filter: grayscale(0.5);
 }
 
 .hero-error-text {
-  color: #ef4444;
+  color: #f87171;
   margin: 1rem 0 0.5rem 0;
 }
 
 .hero-retry-btn {
-  background: transparent;
-  color: #6b7280;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 9999px;
   padding: 0.5rem 1.5rem;
   cursor: pointer;
@@ -81,16 +106,16 @@ body {
 }
 
 .hero-retry-btn:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 /* Spinner */
 .spinner {
   width: 64px;
   height: 64px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #111827;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #8b5cf6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 2rem;
@@ -104,7 +129,7 @@ body {
 
 .loading-text {
   font-size: 1.25rem;
-  color: #6b7280;
+  color: #cbd5e1;
   font-weight: 400;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -129,30 +154,31 @@ body {
 }
 
 .language-card {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: rgba(20, 15, 30, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   padding: 3rem;
   max-width: 500px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 .language-title {
   font-size: 1.75rem;
   margin: 0 0 2rem 0;
   font-weight: 600;
-  color: #111827;
+  color: #ffffff;
 }
 
 .language-select {
   width: 100%;
   padding: 1rem;
   font-size: 1.125rem;
-  background-color: #ffffff;
-  color: #111827;
-  border: 1px solid #e5e7eb;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   margin-bottom: 2rem;
   appearance: none;
@@ -160,19 +186,19 @@ body {
   outline: none;
   transition: border-color 0.2s;
   font-family: inherit;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23111827%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
   background-position: right 1rem top 50%;
   background-size: 0.65rem auto;
 }
 
 .language-select:focus {
-  border-color: #111827;
+  border-color: #8b5cf6;
 }
 
 .language-select option {
-  background-color: #ffffff;
-  color: #111827;
+  background-color: #1a1525;
+  color: #ffffff;
 }
 
 .language-button {
