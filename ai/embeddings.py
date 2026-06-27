@@ -24,7 +24,7 @@ async def get_embedding(text: str) -> list[float]:
     """Return an embedding vector for the given text."""
     import os
 
-    provider = os.environ.get("VOICE_PROVIDER", "openai").lower()
+    provider = os.environ.get("VOICE_PROVIDER", "gemini").lower()
 
     if provider == "gemini":
         from google import genai

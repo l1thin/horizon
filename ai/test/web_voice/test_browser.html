@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Horizon Interview Agent</title>
+        <style>
+            body {
+                font-family: sans-serif;
+                background: #0f172a;
+                color: white;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+                gap: 16px;
+            }
+            button {
+                padding: 20px 40px;
+                font-size: 20px;
+                cursor: pointer;
+                border-radius: 10px;
+                border: none;
+                background: #3b82f6;
+                color: white;
+            }
+            button.active {
+                background: #ef4444;
+            }
+            button:disabled {
+                background: #555;
+            }
+            #status {
+                font-size: 14px;
+                color: #94a3b8;
+                font-family: monospace;
+                white-space: pre-line;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>🎙️ Horizon Interview</h2>
+        <button id="callBtn">Start Call</button>
+        <div id="status">Idle</div>
+
+        <script>
+            const statusEl = document.getElementById("status");
+            const log = (msg) => {
+                console.log(msg);
+                statusEl.textContent += "\n" + msg;
+            };
+
+            let isActive = false;
+            let ws, micContext, playContext, mediaStream, scriptProcessor;
+            let nextPlayTime = 0;
+
+            document
+                .getElementById("callBtn")
+                .addEventListener("click", async () => {
+                    if (isActive) {
+                        // --- HANG UP ---
+                        isActive = false;
+                        document.getElementById("callBtn").textContent =
+                            "Start Call";
+                        document
+                            .getElementById("callBtn")
+                            .classList.remove("active");
+                        if (scriptProcessor) scriptProcessor.disconnect();
+                        if (mediaStream)
+                            mediaStream.getTracks().forEach((t) => t.stop());
+                        if (micContext) micContext.close();
+                        if (playContext) playContext.close();
+                        if (ws) ws.close();
+                        log("📵 Call ended.");
+                        return;
+                    }
+
+                    // --- CALL ---
+                    isActive = true;
+                    document.getElementById("callBtn").textContent = "End Call";
+                    document.getElementById("callBtn").classList.add("active");
+                    statusEl.textContent = "";
+
+                    // 1. Connect WebSocket
+                    ws = new WebSocket(
+                        `ws://${window.location.host}/ws/interview`,
+                    );
+                    ws.binaryType = "arraybuffer";
+                    log("🔗 Connecting...");
+                    ws.onopen = () => log("✅ WebSocket open");
+                    ws.onerror = (e) => log("❌ WebSocket error");
+                    ws.onclose = () => log("🔌 WebSocket closed");
+
+                    // 2a. Mic context at 16kHz — captures audio at exactly Gemini's required rate, no resampling
+                    micContext = new (
+                        window.AudioContext || window.webkitAudioContext
+                    )({ sampleRate: 16000 });
+
+                    // 2b. SEPARATE playback context at 24kHz — Gemini sends 24kHz PCM.
+                    //     Creating a 24kHz buffer inside a 16kHz context causes silent/broken playback.
+                    //     Two separate contexts is the correct pattern.
+                    playContext = new (
+                        window.AudioContext || window.webkitAudioContext
+                    )({ sampleRate: 24000 });
+                    nextPlayTime = playContext.currentTime;
+
+                    // 3. Playback: incoming binary = Int16 PCM at 24kHz
+                    ws.onmessage = (e) => {
+                        const int16 = new Int16Array(e.data);
+                        const float32 = new Float32Array(int16.length);
+                        for (let i = 0; i < int16.length; i++)
+                            float32[i] = int16[i] / 32768.0;
+
+                        const buffer = playContext.createBuffer(
+                            1,
+                            float32.length,
+                            24000,
+                        );
+                        buffer.getChannelData(0).set(float32);
+
+                        const source = playContext.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(playContext.destination);
+
+                        const startAt = Math.max(
+                            playContext.currentTime,
+                            nextPlayTime,
+                        );
+                        source.start(startAt);
+                        nextPlayTime = startAt + buffer.duration;
+
+                        log(`🔊 Audio chunk: ${int16.length} samples`);
+                    };
+
+                    // 4. Mic capture — ScriptProcessor at 16kHz = no resampling needed
+                    try {
+                        mediaStream = await navigator.mediaDevices.getUserMedia(
+                            {
+                                audio: {
+                                    deviceId: {
+                                        exact: "66b8892d046a41b95d0e23693bc33ff968a9bc461d2cc470c1b37f70d45ad341",
+                                    },
+                                    echoCancellation: true,
+                                    noiseSuppression: true,
+                                    channelCount: 1,
+                                },
+                            },
+                        );
+                    } catch (err) {
+                        log(`❌ Mic error: ${err}`);
+                        return;
+                    }
+
+                    const micSource =
+                        micContext.createMediaStreamSource(mediaStream);
+
+                    // 1024 samples at 16kHz = 64ms per chunk — good for VAD
+                    scriptProcessor = micContext.createScriptProcessor(
+                        1024,
+                        1,
+                        1,
+                    );
+
+                    let chunksSent = 0;
+                    scriptProcessor.onaudioprocess = (e) => {
+                        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+                        const float32Data = e.inputBuffer.getChannelData(0);
+
+                        // Convert float32 → int16 PCM
+                        const pcmBuffer = new ArrayBuffer(
+                            float32Data.length * 2,
+                        );
+                        const view = new DataView(pcmBuffer);
+                        for (let i = 0; i < float32Data.length; i++) {
+                            const s = Math.max(-1, Math.min(1, float32Data[i]));
+                            view.setInt16(
+                                i * 2,
+                                s < 0 ? s * 0x8000 : s * 0x7fff,
+                                true,
+                            );
+                        }
+
+                        ws.send(pcmBuffer);
+
+                        chunksSent++;
+                        if (chunksSent === 1) log("📤 Sending mic audio...");
+                        if (chunksSent === 20)
+                            log(
+                                "✅ Streaming — talk now, pause to get a response",
+                            );
+                    };
+
+                    micSource.connect(scriptProcessor);
+                    scriptProcessor.connect(micContext.destination); // keep node alive
+                    log("🎤 Mic active!");
+                });
+        </script>
+    </body>
+</html>

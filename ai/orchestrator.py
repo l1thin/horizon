@@ -307,7 +307,7 @@ class InterviewOrchestrator:
         question_text: str,
         source_code: str,
         transcript_history: list[dict],
-        language: str,
+        language: str = "python",
     ) -> dict:
 
         test_suite_code = await self._generate_dynamic_tests(question_text)
@@ -386,7 +386,8 @@ class InterviewOrchestrator:
             3. If they get stuck or ask for help, offer Socratic hints (ask guiding questions), DO NOT write the code for them.
             4. Remind them to think about Time and Space Complexity.
             5. Acknowledge that when they click submit, their code will run against hidden test cases.
-
+            6. Always uses English as means of communication.
+            
             CANDIDATE CONTEXT (from previous rounds):
             {facts_string}
             """
