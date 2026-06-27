@@ -6,11 +6,9 @@ from services.background import process_resume
 
 router = APIRouter()
 
-# Placeholder dependencies until DB and Redis are fully wired
-async def get_redis():
-    # Return a dummy redis or real redis connection
-    pass
+from db.redis import get_redis_client as get_redis
 
+# Placeholder dependencies until DB is fully wired
 async def get_db():
     pass
 

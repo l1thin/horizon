@@ -33,12 +33,12 @@ export default function RadarChart({ questions }) {
   }, [questions]);
 
   return (
-    <div style={{ width: '100%', height: 300, backgroundColor: '#1e1e2f', borderRadius: '12px', padding: '1rem', marginTop: '1rem' }}>
+    <div style={{ width: '100%', height: 300, backgroundColor: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1rem', marginTop: '1rem', boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
       <ResponsiveContainer width="100%" height="100%">
         <RechartsRadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
-          <PolarGrid stroke="#3f3f5a" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 12 }} />
-          <Radar name="Score" dataKey="A" stroke="#818cf8" fill="#6366f1" fillOpacity={0.35} />
+          <PolarGrid stroke="#e5e7eb" />
+          <PolarAngleAxis dataKey="subject" tick={{ fill: '#6b7280', fontSize: 12 }} />
+          <Radar name="Score" dataKey="A" stroke="#9ca3af" fill="#e5e7eb" fillOpacity={0.5} />
         </RechartsRadarChart>
       </ResponsiveContainer>
     </div>

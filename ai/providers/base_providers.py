@@ -1,4 +1,3 @@
-from warnings import deprecated
 
 from ai.config import Config
 

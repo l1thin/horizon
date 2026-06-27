@@ -59,7 +59,7 @@ export default function CodingSection({ question, sessionId, preferredLanguage, 
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', backgroundColor: '#1e1e1e', textAlign: 'left' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100%', backgroundColor: 'transparent', textAlign: 'left' }}>
       {toastMessage && (
         <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: '#ef4444', color: 'white', padding: '10px 20px', borderRadius: '20px', fontWeight: 'bold', zIndex: 1000 }}>
           {toastMessage}
@@ -67,11 +67,11 @@ export default function CodingSection({ question, sessionId, preferredLanguage, 
       )}
       
       {/* Top bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', backgroundColor: '#252526', borderBottom: '1px solid #333' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           {/* Small floating orb circle */}
           <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: 'conic-gradient(from 0deg, #6366f1, #a78bfa, #6366f1)', animation: 'spin 3s linear infinite' }}></div>
-          <div style={{ color: '#fff', fontSize: '16px', fontWeight: '500' }}>{question?.text || 'Coding Challenge'}</div>
+          <div style={{ color: '#111827', fontSize: '16px', fontWeight: '500' }}>{question?.text || 'Coding Challenge'}</div>
         </div>
         <CountdownTimer secondsLeft={secondsLeft} isExpired={isExpired} />
       </div>
@@ -81,7 +81,7 @@ export default function CodingSection({ question, sessionId, preferredLanguage, 
         <Editor 
           height="100%" 
           defaultLanguage={(preferredLanguage || 'python').toLowerCase()} 
-          theme="vs-dark"
+          theme="vs-light"
           options={{ fontSize: 14, minimap: { enabled: false }, scrollBeyondLastLine: false }}
           onChange={value => setCode(value || '')} 
         />
@@ -98,11 +98,11 @@ export default function CodingSection({ question, sessionId, preferredLanguage, 
       )}
 
       {/* Bottom bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 2rem', backgroundColor: '#252526', borderTop: '1px solid #333' }}>
-        <button onClick={handleRun} style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '5px', padding: '8px 20px', cursor: 'pointer', fontWeight: 'bold' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 2rem', backgroundColor: '#ffffff', borderTop: '1px solid #e5e7eb' }}>
+        <button onClick={handleRun} style={{ background: 'transparent', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '5px', padding: '8px 20px', cursor: 'pointer', fontWeight: 'bold' }}>
           Run
         </button>
-        <button onClick={handleSubmit} style={{ background: '#10b981', color: 'white', border: 'none', borderRadius: '5px', padding: '8px 20px', cursor: 'pointer', fontWeight: 'bold' }}>
+        <button onClick={handleSubmit} style={{ background: 'transparent', color: '#6b7280', border: '1px solid #e5e7eb', borderRadius: '5px', padding: '8px 20px', cursor: 'pointer', fontWeight: 'bold' }}>
           Submit Early
         </button>
       </div>

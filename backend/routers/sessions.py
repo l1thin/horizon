@@ -4,10 +4,9 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Placeholder dependencies
-async def get_redis():
-    pass
+from db.redis import get_redis_client as get_redis
 
+# Placeholder for get_db
 async def get_db():
     pass
 

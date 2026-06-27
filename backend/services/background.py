@@ -13,13 +13,16 @@ async def save_candidate_profile(session_id: str, profile: dict):
 
 async def process_resume(session_id: str, resume_text: str, redis_client):
     try:
+        print(f"[{session_id}] Starting resume processing...")
         # Step 1 — update status
         await redis_client.set(f"session:{session_id}:status", "processing")
 
         orchestrator = InterviewOrchestrator()
 
         # Step 2 — extract profile (Dev 3's function)
+        print(f"[{session_id}] Extracting profile using AI...")
         profile = await orchestrator.extract_profile(resume_text)
+        print(f"[{session_id}] Profile extracted. Inferred role: {profile.get('current_role', 'Unknown')}")
 
         # Step 3 — store profile in DB and Redis
         await save_candidate_profile(session_id, profile)
@@ -38,6 +41,7 @@ async def process_resume(session_id: str, resume_text: str, redis_client):
         )
 
         # Step 4 — generate questions
+        print(f"[{session_id}] Generating interview questions...")
         # job_role defaults to profile's current_role if not provided
         questions_data = await orchestrator.generate_interview_plan(
             resume_text=resume_text,
@@ -62,9 +66,11 @@ async def process_resume(session_id: str, resume_text: str, redis_client):
         )
 
         # Step 5 — mark ready
+        print(f"[{session_id}] Generated {len(mapped_questions)} questions. Marking session as ready.")
         await redis_client.set(f"session:{session_id}:status", "ready")
 
     except Exception as e:
+        print(f"[{session_id}] Error during processing: {str(e)}")
         await redis_client.set(f"session:{session_id}:status", "error")
         await redis_client.set(f"session:{session_id}:error", str(e))
         raise
