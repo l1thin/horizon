@@ -44,9 +44,15 @@ async def session_ws(websocket: WebSocket, session_id: str):
         return
 
     questions = json.loads(raw)
-    q_index = 0
+    
+    # Try loading existing state for reconnection
+    saved_q_index = await redis.get(f"session:{session_id}:q_index")
+    saved_answers = await redis.get(f"session:{session_id}:raw_answers")
+    
+    q_index = int(saved_q_index) if saved_q_index else 0
+    raw_answers = json.loads(saved_answers) if saved_answers else []
+    
     pending_follow_up = None  # set when follow_up should be injected next
-    raw_answers = []          # collected for post-session eval
 
     try:
         while True:
@@ -56,7 +62,7 @@ async def session_ws(websocket: WebSocket, session_id: str):
                 pending_follow_up = None
                 state = "QUESTION"
             else:
-                if q_index >= len(questions):
+                if q_index >= len(questions) or q_index >= 5:
                     # All questions done → trigger post-session eval + report
                     state = "REPORT"
                 else:
@@ -71,7 +77,7 @@ async def session_ws(websocket: WebSocket, session_id: str):
                         "text": current_q["text"],
                         "question_type": current_q.get("type", "question"),
                         "index": q_index + 1,
-                        "total": len(questions),
+                        "total": min(len(questions), 5),
                         "time_limit_seconds": current_q.get("time_limit_seconds", 300) if current_q.get("type") == "coding" else None
                     }
                 })
@@ -137,6 +143,9 @@ async def session_ws(websocket: WebSocket, session_id: str):
         await redis.set(f"session:{session_id}:q_index", q_index, ex=3600)
         await redis.set(f"session:{session_id}:raw_answers", json.dumps(raw_answers), ex=3600)
     except Exception as e:
+        import traceback
+        with open("ws_error.log", "a") as f:
+            f.write(traceback.format_exc() + "\n")
         # Attempt to inform the client of an error if the connection is still alive
         try:
             await websocket.send_json({"type": "error", "payload": {"message": str(e)}})
@@ -173,7 +182,27 @@ async def run_post_session_eval(session_id: str, raw_answers: list, redis):
             target_job_skills=target_skills
         )
         
+        # Calculate integrity from raw_answers
+        tab_switches = 0
+        fast_answers = 0
+        for ans in raw_answers:
+            integrity = ans.get("integrity", {})
+            tab_switches += int(integrity.get("tab_switches", 0))
+            if int(integrity.get("think_time_ms", 9999)) < 2000:
+                fast_answers += 1
+                
+        verdict = "pass"
+        if tab_switches > 3 or fast_answers > 2:
+            verdict = "review_needed"
+            
+        evaluated["integrity"] = {
+            "tab_switches": tab_switches,
+            "fast_answer_questions": fast_answers,
+            "verdict": verdict
+        }
+        
         await store_report(session_id, evaluated)
+        await redis.set(f"session:{session_id}:report", json.dumps(evaluated), ex=3600)
         await redis.set(f"session:{session_id}:status", "report_ready")
     except Exception as e:
         await redis.set(f"session:{session_id}:eval_error", str(e))
