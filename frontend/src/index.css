@@ -73,7 +73,7 @@ body::before {
   padding: 1rem 2.5rem;
   font-family: inherit;
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 400;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 15px -3px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
